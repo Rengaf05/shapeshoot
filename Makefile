@@ -30,7 +30,7 @@ ifndef BUILD_BASEGAME
   BUILD_BASEGAME =
 endif
 ifndef BUILD_MISSIONPACK
-  BUILD_MISSIONPACK=
+  BUILD_MISSIONPACK=0
 endif
 ifndef BUILD_RENDERER_OPENGL2
   BUILD_RENDERER_OPENGL2=
@@ -108,15 +108,15 @@ VERSION=1.36
 endif
 
 ifndef CLIENTBIN
-CLIENTBIN=ioquake3
+CLIENTBIN=shapeshoot
 endif
 
 ifndef SERVERBIN
-SERVERBIN=ioq3ded
+SERVERBIN=shapeshoot-ded
 endif
 
 ifndef BASEGAME
-BASEGAME=baseq3
+BASEGAME=shapeshoot
 endif
 
 ifndef BASEGAME_CFLAGS
