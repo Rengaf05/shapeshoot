@@ -27,17 +27,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // A user mod should never modify this file
 
 #ifdef STANDALONE
-  #define PRODUCT_NAME				"iofoo3"
-  #define BASEGAME					"foobar"
-  #define CLIENT_WINDOW_TITLE		"changeme"
-  #define CLIENT_WINDOW_MIN_TITLE	"changeme2"
-  #define HOMEPATH_NAME_UNIX		".foo"
-  #define HOMEPATH_NAME_WIN			"FooBar"
+  #define PRODUCT_NAME			"shapeshoot"
+  #define BASEGAME			"shapeshoot"
+  #define CLIENT_WINDOW_TITLE		"shapeshoot"
+  #define CLIENT_WINDOW_MIN_TITLE	"shapeshoot"
+  #define HOMEPATH_NAME_UNIX		".shapeshoot"
+  #define HOMEPATH_NAME_WIN		"shapeshoot"
   #define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
 //  #define STEAMPATH_NAME			"Foo Bar"
 //  #define STEAMPATH_APPID         ""
-  #define GAMENAME_FOR_MASTER		"foobar"	// must NOT contain whitespace
-  #define CINEMATICS_LOGO		"foologo.roq"
+  #define GAMENAME_FOR_MASTER		"shapeshoot" //must NOT contain whitespace
+  #define CINEMATICS_LOGO		"logo.roq"
   #define CINEMATICS_INTRO		"intro.roq"
 //  #define LEGACY_PROTOCOL	// You probably don't need this for your standalone game
 #else
