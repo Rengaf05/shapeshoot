@@ -1261,7 +1261,7 @@ For determining velocity at a given time
 void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t result ) {
 	float	deltaTime;
 	float	phase;
-	ve3_t	dir;
+	vec3_t	dir;
 
 	switch( tr->trType ) {
 	case TR_STATIONARY:
