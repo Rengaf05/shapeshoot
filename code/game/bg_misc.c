@@ -1197,6 +1197,7 @@ BG_EvaluateTrajectory
 void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result ) {
 	float		deltaTime;
 	float		phase;
+	vec3_t		dir;
 
 	switch( tr->trType ) {
 	case TR_STATIONARY:
@@ -1227,6 +1228,23 @@ void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result ) 
 		VectorMA( tr->trBase, deltaTime, tr->trDelta, result );
 		result[2] -= 0.5 * DEFAULT_GRAVITY * deltaTime * deltaTime;		// FIXME: local gravity...
 		break;
+	case TR_ACCEL:
+		//s = u*t + .5*a*t^2
+		//t
+		deltaTime = ( atTime - tr->trTime ) * 0.001; 
+		
+		//.5*a*t^2
+		phase = 0.5 * tr->trDuration * deltaTime * deltaTime;
+
+		//set origin
+		//s = .5*a*t^2
+		VectorCopy(tr->trDelta, dir);
+		VectorNormalize(dir);
+		VectorMA(tr->trBase, phase, dir, result);
+
+		//s += u*t
+		VectorMA(result, deltaTime, tr->trDelta, result);
+		break;
 	default:
 		Com_Error( ERR_DROP, "BG_EvaluateTrajectory: unknown trType: %i", tr->trType );
 		break;
@@ -1243,6 +1261,7 @@ For determining velocity at a given time
 void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t result ) {
 	float	deltaTime;
 	float	phase;
+	ve3_t	dir;
 
 	switch( tr->trType ) {
 	case TR_STATIONARY:
@@ -1269,6 +1288,19 @@ void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t resu
 		deltaTime = ( atTime - tr->trTime ) * 0.001;	// milliseconds to seconds
 		VectorCopy( tr->trDelta, result );
 		result[2] -= DEFAULT_GRAVITY * deltaTime;		// FIXME: local gravity...
+		break;
+	case TR_ACCEL:
+		//v = u + a*t
+		//t
+		deltaTime = ( atTime - tr->trTime ) * 0.001;
+
+		//acceleration to direction vector
+		VectorCopy(tr->trDelta, dir);
+		VectorNormalize(dir);
+		VectorScale(dir, tr->trDuration, dir);
+
+		//v = u + t*a
+		VectorMA(tr->trDelta, deltaTime, dir, result);
 		break;
 	default:
 		Com_Error( ERR_DROP, "BG_EvaluateTrajectoryDelta: unknown trType: %i", tr->trType );
