@@ -808,10 +808,14 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		trap_S_StartSound (NULL, es->number, CHAN_AUTO, cgs.media.selectSound );
 		break;
 	case EV_FIRE_WEAPON:
-		DEBUGNAME("EV_FIRE_WEAPON");
+	case EV_ALTFIRE_WEAPON:
+		if (event == EV_FIRE_WEAPON) {
+			DEBUGNAME("EV_FIRE_WEAPON");
+		} else {
+			DEBUGNAME("EV_ALTFIRE_WEAPON");
+		}
 		CG_FireWeapon( cent );
 		break;
-
 	case EV_USE_ITEM0:
 		DEBUGNAME("EV_USE_ITEM0");
 		CG_UseItem( cent );

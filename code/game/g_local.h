@@ -516,6 +516,7 @@ void G_RunMissile( gentity_t *ent );
 gentity_t *fire_plasma (gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_grenade (gentity_t *self, vec3_t start, vec3_t aimdir);
 gentity_t *fire_rocket (gentity_t *self, vec3_t start, vec3_t dir);
+gentity_t *altfire_rocket (gentity_t *self, vec3_t start, vec3_t dir);
 gentity_t *fire_bfg (gentity_t *self, vec3_t start, vec3_t dir);
 gentity_t *fire_grapple (gentity_t *self, vec3_t start, vec3_t dir);
 #ifdef MISSIONPACK
@@ -586,6 +587,7 @@ qboolean G_FilterPacket (char *from);
 // g_weapon.c
 //
 void FireWeapon( gentity_t *ent );
+void AltFireWeapon( gentity_t *ent );
 #ifdef MISSIONPACK
 void G_StartKamikaze( gentity_t *ent );
 #endif
