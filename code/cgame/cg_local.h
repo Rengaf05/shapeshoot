@@ -1072,6 +1072,7 @@ typedef struct {
 	// media
 	cgMedia_t		media;
 
+	int seniorLevel;
 } cgs_t;
 
 //==============================================================================

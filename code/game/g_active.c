@@ -856,6 +856,27 @@ void ClientThink_real( gentity_t *ent ) {
 		client->ps.speed *= 1.3;
 	}
 
+	switch (g_seniorLevel.integer) {
+	case -3:
+		client->ps.speed *= 1.9;
+		break;
+	case -2:
+		client->ps.speed *= 1.6;
+		break;
+	case -1:
+		client->ps.speed *= 1.3;
+		break;
+	case 1:
+		client->ps.speed *= 0.7;
+		break;
+	case 2:
+		client->ps.speed *= 0.4;
+		break;
+	case 3:
+		client->ps.speed *= 0.1;
+		break;
+	}
+
 	// Let go of the hook if we aren't firing
 	if ( client->ps.weapon == WP_GRAPPLING_HOOK &&
 		client->hook && !( ucmd->buttons & BUTTON_ATTACK ) ) {
@@ -921,6 +942,8 @@ void ClientThink_real( gentity_t *ent ) {
 	pm.pointcontents = trap_PointContents;
 	pm.debugLevel = g_debugMove.integer;
 	pm.noFootsteps = ( g_dmflags.integer & DF_NO_FOOTSTEPS ) > 0;
+
+	pm.seniorLevel = g_seniorLevel.integer;
 
 	pm.pmove_fixed = pmove_fixed.integer | client->pers.pmoveFixed;
 	pm.pmove_msec = pmove_msec.integer;

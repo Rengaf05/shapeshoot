@@ -1704,6 +1704,27 @@ static void PM_Weapon( void ) {
 		addTime /= 1.3;
 	}
 
+	switch (pm->seniorLevel) {
+	case -3:
+		addTime /= 1.9;
+		break;
+	case -2:
+		addTime /= 1.6;
+		break;
+	case -1:
+		addTime /= 1.3;
+		break;
+	case 1:
+		addTime /= 0.7;
+		break;
+	case 2: 
+		addTime /= 0.4;
+		break;
+	case 3:
+		addTime /= 0.1;
+		break;
+	}
+
 	pm->ps->weaponTime += addTime;
 }
 
@@ -1866,7 +1887,7 @@ void PmoveSingle (pmove_t *pmove) {
 
 	// set the firing flag for continuous beam weapons
 	if ( !(pm->ps->pm_flags & PMF_RESPAWNED) && pm->ps->pm_type != PM_INTERMISSION && pm->ps->pm_type != PM_NOCLIP
-		&& ( pm->cmd.buttons & BUTTON_ATTACK ) && pm->ps->ammo[ pm->ps->weapon ] ) {
+		&& ( pm->cmd.buttons & (BUTTON_ATTACK|BUTTON_ALT_ATTACK) ) && pm->ps->ammo[ pm->ps->weapon ] ) {
 		pm->ps->eFlags |= EF_FIRING;
 	} else {
 		pm->ps->eFlags &= ~EF_FIRING;

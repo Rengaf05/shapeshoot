@@ -68,6 +68,8 @@ void G_ExplodeMissile( gentity_t *ent ) {
 	vec3_t		dir;
 	vec3_t		origin;
 
+	ent->takedamage = qfalse;
+
 	BG_EvaluateTrajectory( &ent->s.pos, level.time, origin );
 	SnapVector( origin );
 	G_SetOrigin( ent, origin );
@@ -92,6 +94,18 @@ void G_ExplodeMissile( gentity_t *ent ) {
 	trap_LinkEntity( ent );
 }
 
+/*
+================
+G_MissileDie
+================
+*/
+void G_MissileDie( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod) {
+	if (inflictor == self)
+		return;
+	self->takedamage = qfalse;
+	self->think = G_ExplodeMissile;
+	self->nextthink = level.time + 10;
+}
 
 #ifdef MISSIONPACK
 /*
@@ -283,6 +297,8 @@ void G_MissileImpact( gentity_t *ent, trace_t *trace ) {
 		G_AddEvent( ent, EV_GRENADE_BOUNCE, 0 );
 		return;
 	}
+
+	ent->takedamage = qfalse;
 
 #ifdef MISSIONPACK
 	if ( other->takedamage ) {
@@ -639,6 +655,75 @@ gentity_t *fire_bfg (gentity_t *self, vec3_t start, vec3_t dir) {
 
 /*
 =================
+homingrocket_think
+=================
+*/
+#define HOMINGROCKET_SPEED 600
+
+void homingrocket_think( gentity_t *ent ) {
+	gentity_t	*target, *tent;
+	float		targetlength, tentlength;
+	int		i;
+	vec3_t		tentdir, targetdir, forward, midbody;
+	trace_t		tr;
+
+	//destroy if run out of time
+	if (level.time >= ent->s.pos.trDuration) G_ExplodeMissile(ent);
+	
+	//init variables
+	target = NULL;
+	targetlength = LIGHTNING_RANGE;
+	//get forward vector
+	VectorCopy(ent->s.pos.trDelta, forward);
+	VectorNormalize(forward);
+	for (i = 0; i < level.maxclients; ++i) {
+		//get target
+		tent = &g_entities[i];
+		
+		//check if valid target
+		if (!tent->inuse) continue;
+		if (tent == ent->parent) continue;
+		if (OnSameTeam(tent, ent->parent)) continue;
+
+		//aim for body
+		midbody[0] = tent->r.currentOrigin[0] + (tent->r.mins[0] + tent->r.maxs[0]) * 0.5;
+		midbody[1] = tent->r.currentOrigin[1] + (tent->r.mins[1] + tent->r.maxs[1]) * 0.5;
+		midbody[2] = tent->r.currentOrigin[2] + (tent->r.mins[2] + tent->r.maxs[2]) * 0.5;
+
+		//find the nearest
+		VectorSubtract(midbody, ent->r.currentOrigin, tentdir);
+		tentlength = VectorLength(tentdir);
+		if (tentlength > targetlength) continue;
+
+		//normalize using already calculated length
+		tentdir[0] /= tentlength;
+		tentdir[1] /= tentlength;
+		tentdir[2] /= tentlength;
+		if (DotProduct(forward,tentdir) < 0.9f) continue;
+	
+		//check for visbility
+		trap_Trace(&tr, ent->r.currentOrigin, NULL, NULL, tent->r.currentOrigin, ENTITYNUM_NONE, MASK_SHOT);
+		if (tent != &g_entities[tr.entityNum]) continue;
+
+		//save
+		target = tent;
+		targetlength = tentlength;
+		VectorCopy(tentdir, targetdir);
+	}
+
+	ent->nextthink += 50;
+
+	//dont change direction if no target
+	if (!target) return;
+
+	//apply calculated values
+	VectorMA(forward, 0.05, targetdir, targetdir);
+	VectorNormalize(targetdir);
+	VectorScale(targetdir, HOMINGROCKET_SPEED, ent->s.pos.trDelta);
+}
+
+/*
+=================
 fire_rocket
 =================
 */
@@ -686,8 +771,18 @@ gentity_t *altfire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 
 	bolt = G_Spawn();
 	bolt->classname = "altrocket";
-	bolt->nextthink = level.time + 15000;
-	bolt->think = G_ExplodeMissile;
+	bolt->nextthink = level.time + 1;
+	bolt->think = homingrocket_think;
+
+	bolt->health = 5;
+	bolt->takedamage = qtrue;
+	bolt->die = G_MissileDie;
+	bolt->r.contents = CONTENTS_BODY;
+	VectorSet(bolt->r.mins, -10, -3, 0);
+	VectorCopy(bolt->r.mins, bolt->r.absmin);
+	VectorSet(bolt->r.maxs, 10, 3, 6);
+	VectorCopy(bolt->r.maxs, bolt->r.absmax);	
+
 	bolt->s.eType = ET_MISSILE;
 	bolt->r.svFlags = SVF_USE_CURRENT_ORIGIN;
 	bolt->s.weapon = WP_ROCKET_LAUNCHER;
@@ -701,11 +796,11 @@ gentity_t *altfire_rocket (gentity_t *self, vec3_t start, vec3_t dir) {
 	bolt->clipmask = MASK_SHOT;
 	bolt->target_ent = NULL;
 
-	bolt->s.pos.trType = TR_ACCEL;
-	bolt->s.pos.trDuration = 500;
+	bolt->s.pos.trType = TR_LINEAR;
+	bolt->s.pos.trDuration = level.time + 15000;
 	bolt->s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;		// move a bit on the very first frame
 	VectorCopy( start, bolt->s.pos.trBase );
-	VectorScale( dir, 50, bolt->s.pos.trDelta );
+	VectorScale( dir, HOMINGROCKET_SPEED, bolt->s.pos.trDelta );
 	SnapVector( bolt->s.pos.trDelta );			// save net bandwidth
 	VectorCopy (start, bolt->r.currentOrigin);
 
