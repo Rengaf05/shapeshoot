@@ -1426,6 +1426,8 @@ localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 								qhandle_t hModel, qhandle_t shader, int msec,
 								qboolean isSprite );
 
+void CG_LightningArc(vec3_t start, vec3_t end);
+
 //
 // cg_snapshot.c
 //

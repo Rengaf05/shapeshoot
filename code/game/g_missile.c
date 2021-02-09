@@ -658,7 +658,7 @@ gentity_t *fire_bfg (gentity_t *self, vec3_t start, vec3_t dir) {
 homingrocket_think
 =================
 */
-#define HOMINGROCKET_SPEED 600
+#define HOMINGROCKET_SPEED 200
 
 void homingrocket_think( gentity_t *ent ) {
 	gentity_t	*target, *tent;
@@ -699,7 +699,7 @@ void homingrocket_think( gentity_t *ent ) {
 		tentdir[0] /= tentlength;
 		tentdir[1] /= tentlength;
 		tentdir[2] /= tentlength;
-		if (DotProduct(forward,tentdir) < 0.9f) continue;
+		if (DotProduct(forward,tentdir) < 0.5f) continue;
 	
 		//check for visbility
 		trap_Trace(&tr, ent->r.currentOrigin, NULL, NULL, tent->r.currentOrigin, ENTITYNUM_NONE, MASK_SHOT);

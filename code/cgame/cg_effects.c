@@ -716,3 +716,23 @@ void CG_BigExplode( vec3_t playerOrigin ) {
 	CG_LaunchExplode( origin, velocity, cgs.media.smoke2 );
 }
 
+/*
+===================
+CG_LightningArc
+===================
+*/
+void CG_LightningArc(vec3_t start, vec3_t end) {
+	refEntity_t	arc;
+
+	//clear arc
+	memset(&arc, 0, sizeof(arc));
+
+	//set up arc
+	arc.reType = RT_LIGHTNING;
+	arc.customShader = cgs.media.lightningShader;
+	VectorCopy(start, arc.origin);
+	VectorCopy(end, arc.oldorigin);
+
+	//put the arc to the scene
+	trap_R_AddRefEntityToScene(&arc);
+}

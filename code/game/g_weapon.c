@@ -688,6 +688,156 @@ void Weapon_LightningFire( gentity_t *ent ) {
 	}
 }
 
+#define CHAINLIGHTNING_DAMAGE 3
+
+static gentity_t *chainTargets[MAX_CLIENTS];
+
+void ChainLightning_Fire( gentity_t *ent, gentity_t *target ) {
+	int		i, j, damage, totalTargets;
+	qboolean	isChainTarget;
+	vec3_t		dir, targetDir;
+	gentity_t	*tent, *oldtarget;
+	float		tentDist, targetLength;
+	trace_t		tr, targettr;
+
+	damage = CHAINLIGHTNING_DAMAGE * s_quadFactor;
+	chainTargets[0] = target;
+	totalTargets = 1;
+
+	while (1) {
+		//save and clear
+		oldtarget = target;
+		target = NULL;
+		targetLength = LIGHTNING_RANGE;
+		
+		//loop through clients and get target
+		for (i = 0; i < level.maxclients; ++i) {
+			tent = &g_entities[i];
+			isChainTarget = qfalse;
+			
+			//check target
+			//if not in use
+			if (!tent->inuse) continue;
+			//if is attacker
+			if (tent == ent) continue;
+			//if is already target
+			for (j = 0; j < totalTargets; ++j) {
+				if (tent == chainTargets[j]) {
+					isChainTarget = qtrue;
+					break;
+				}
+			}
+			if (isChainTarget) continue;
+
+			//get lowest distance
+			VectorSubtract(oldtarget->r.currentOrigin, tent->r.currentOrigin, dir);
+			tentDist = VectorLength(dir);
+			if (tentDist > targetLength) continue;
+
+			//is visible
+			trap_Trace(&tr, oldtarget->r.currentOrigin, NULL, NULL, tent->r.currentOrigin, ent->s.number, MASK_SHOT);
+			if (tent != &g_entities[tr.entityNum]) continue;
+
+			target = tent;
+			targettr = tr;
+			targetLength = tentDist;
+			VectorCopy(dir, targetDir);
+		}
+		
+		if (!target) break;
+		if (!target->takedamage) break;
+
+		chainTargets[totalTargets++] = target;
+
+		//create effects
+		tent = G_TempEntity(targettr.endpos, EV_MISSILE_HIT);
+		tent->s.otherEntityNum = target->s.number;
+		tent->s.eventParm = DirToByte(targettr.plane.normal);
+		tent->s.weapon = WP_LIGHTNING;
+
+		//deal damage
+		G_Damage(target, ent, ent, targetDir, targettr.endpos, damage, 0, MOD_LIGHTNING);
+
+		//create lightning 
+		tent = G_TempEntity(oldtarget->r.currentOrigin, EV_LIGHTNINGARC);
+		VectorCopy(target->r.currentOrigin, tent->s.origin2);
+	}
+}
+
+void Weapon_LightningAltFire( gentity_t *ent ) {
+	trace_t		tr;
+	vec3_t		end;
+#ifdef MISSIONPACK
+	vec3_t impactpoint, bouncedir;
+#endif
+	gentity_t	*traceEnt, *tent;
+	int			damage, i, passent;
+
+	damage = CHAINLIGHTNING_DAMAGE * s_quadFactor;
+
+	passent = ent->s.number;
+	for (i = 0; i < 10; i++) {
+		VectorMA( muzzle, LIGHTNING_RANGE, forward, end );
+
+		trap_Trace( &tr, muzzle, NULL, NULL, end, passent, MASK_SHOT );
+
+#ifdef MISSIONPACK
+		// if not the first trace (the lightning bounced of an invulnerability sphere)
+		if (i) {
+			// add bounced off lightning bolt temp entity
+			// the first lightning bolt is a cgame only visual
+			//
+			tent = G_TempEntity( muzzle, EV_LIGHTNINGBOLT );
+			VectorCopy( tr.endpos, end );
+			SnapVector( end );
+			VectorCopy( end, tent->s.origin2 );
+		}
+#endif
+		if ( tr.entityNum == ENTITYNUM_NONE ) {
+			return;
+		}
+
+		traceEnt = &g_entities[ tr.entityNum ];
+
+		if ( traceEnt->takedamage) {
+#ifdef MISSIONPACK
+			if ( traceEnt->client && traceEnt->client->invulnerabilityTime > level.time ) {
+				if (G_InvulnerabilityEffect( traceEnt, forward, tr.endpos, impactpoint, bouncedir )) {
+					G_BounceProjectile( muzzle, impactpoint, bouncedir, end );
+					VectorCopy( impactpoint, muzzle );
+					VectorSubtract( end, impactpoint, forward );
+					VectorNormalize(forward);
+					// the player can hit him/herself with the bounced lightning
+					passent = ENTITYNUM_NONE;
+				}
+				else {
+					VectorCopy( tr.endpos, muzzle );
+					passent = traceEnt->s.number;
+				}
+				continue;
+			}
+#endif
+			if( LogAccuracyHit( traceEnt, ent ) ) {
+				ent->client->accuracy_hits++;
+			}
+			G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, 0, MOD_LIGHTNING);
+			ChainLightning_Fire(ent, traceEnt);
+		}
+
+		if ( traceEnt->takedamage && traceEnt->client ) {
+			tent = G_TempEntity( tr.endpos, EV_MISSILE_HIT );
+			tent->s.otherEntityNum = traceEnt->s.number;
+			tent->s.eventParm = DirToByte( tr.plane.normal );
+			tent->s.weapon = ent->s.weapon;
+		} else if ( !( tr.surfaceFlags & SURF_NOIMPACT ) ) {
+			tent = G_TempEntity( tr.endpos, EV_MISSILE_MISS );
+			tent->s.eventParm = DirToByte( tr.plane.normal );
+		}
+
+		break;
+	}
+}
+
 #ifdef MISSIONPACK
 /*
 ======================================================================
@@ -933,7 +1083,7 @@ void AltFireWeapon( gentity_t *ent ) {
 		Weapon_Gauntlet( ent );
 		break;
 	case WP_LIGHTNING:
-		Weapon_LightningFire( ent );
+		Weapon_LightningAltFire( ent );
 		break;
 	case WP_SHOTGUN:
 		weapon_supershotgun_fire( ent );

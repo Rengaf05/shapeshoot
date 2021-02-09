@@ -1004,6 +1004,11 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 			CG_MissileHitWall( es->weapon, es->clientNum, position, dir, IMPACTSOUND_DEFAULT );
 		}
 		break;
+	
+	case EV_LIGHTNINGARC:
+		DEBUGNAME("EV_LIGHTNINGARC");
+		CG_LightningArc(position, es->origin2);
+		break;
 
 	case EV_BULLET_HIT_WALL:
 		DEBUGNAME("EV_BULLET_HIT_WALL");
